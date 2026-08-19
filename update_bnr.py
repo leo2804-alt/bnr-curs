@@ -10,25 +10,27 @@ try:
     with urllib.request.urlopen(req, timeout=15) as r:
         continut = r.read().decode('utf-8')
 
-    # Afișăm primele 500 de caractere primite de la BNR ca să vedem ce sunt
-    print(f"Continut primit (primele 500 caractere):\n{continut[:500]}")
-    
     radacina = ET.fromstring(continut)
-    ns = {'b': 'http://www.bnr.ro/xsd'}
-    cube = radacina.find('.//b:Cube', ns)
     
-    if cube is None:
-        print("Eroare: BNR nu a returnat XML-ul corect. Vezi continutul de mai sus.")
+    # Căutăm orice etichetă care se termină cu "Cube" și are atribut "date"
+    data_curs = None
+    for elem in radacina.iter():
+        if elem.tag.endswith('Cube') and elem.get('date'):
+            data_curs = elem.get('date')
+            break
+            
+    if not data_curs:
+        print("Eroare: Nu am gasit data in XML")
         sys.exit(1)
 
-    data = cube.get('date')
-    
-    for rata in radacina.iter('{http://www.bnr.ro/xsd}Rate'):
-        if rata.get('currency') == 'EUR':
-            curs = {'eur': float(rata.text), 'date': data}
+    # Căutăm orice etichetă care se termină cu "Rate" și are currency="EUR"
+    for elem in radacina.iter():
+        if elem.tag.endswith('Rate') and elem.get('currency') == 'EUR':
+            curs_valoare = float(elem.text)
+            curs = {'eur': curs_valoare, 'date': data_curs}
             with open('curs.json', 'w') as f:
                 json.dump(curs, f)
-            print("Succes! curs.json a fost creat cu valoarea:", curs['eur'])
+            print(f"Succes! curs.json a fost creat cu valoarea: {curs_valoare} (data: {data_curs})")
             sys.exit(0)
             
     print("Eroare: Nu am gasit EUR in XML")
