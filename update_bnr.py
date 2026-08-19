@@ -12,7 +12,6 @@ try:
 
     radacina = ET.fromstring(continut)
     
-    # Căutăm orice etichetă care se termină cu "Cube" și are atribut "date"
     data_curs = None
     for elem in radacina.iter():
         if elem.tag.endswith('Cube') and elem.get('date'):
@@ -23,18 +22,21 @@ try:
         print("Eroare: Nu am gasit data in XML")
         sys.exit(1)
 
-    # Căutăm orice etichetă care se termină cu "Rate" și are currency="EUR"
+    curs = {'date': data_curs}
     for elem in radacina.iter():
-        if elem.tag.endswith('Rate') and elem.get('currency') == 'EUR':
-            curs_valoare = float(elem.text)
-            curs = {'eur': curs_valoare, 'date': data_curs}
-            with open('curs.json', 'w') as f:
-                json.dump(curs, f)
-            print(f"Succes! curs.json a fost creat cu valoarea: {curs_valoare} (data: {data_curs})")
-            sys.exit(0)
+        if elem.tag.endswith('Rate'):
+            moneda = elem.get('currency')
+            if moneda in ['EUR', 'USD']:
+                curs[moneda.lower()] = float(elem.text)
             
-    print("Eroare: Nu am gasit EUR in XML")
-    sys.exit(1)
+    if 'eur' in curs:
+        with open('curs.json', 'w') as f:
+            json.dump(curs, f)
+        print(f"Succes! curs.json creat. EUR: {curs.get('eur')}, USD: {curs.get('usd')}")
+        sys.exit(0)
+    else:
+        print("Eroare: Nu am gasit EUR in XML")
+        sys.exit(1)
             
 except Exception as e:
     print(f"Eroare: {e}")
