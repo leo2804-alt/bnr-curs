@@ -1,7 +1,7 @@
 name: Update BNR
 on:
   schedule:
-    - cron: '0 6 * * *'
+    - cron: '0 21 * * *'  # Ruleaza la ora 24:00 (00:00) ora Romaniei
   workflow_dispatch:
 
 jobs:
