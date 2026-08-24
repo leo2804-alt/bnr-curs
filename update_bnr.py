@@ -2,6 +2,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 import json
 import sys
+import urllib.parse
 
 def obtine_bnr():
     url = 'https://curs.bnr.ro/nbrfxrates.xml'
@@ -27,26 +28,22 @@ def obtine_bnr():
         print(f"Eroare BNR: {e}")
         return {}
 
-def obtine_stiri_direct(url_rss, sursa, n=3):
-    # GitHub are acces liber direct la RSS, nu trebuie ocolit ca pe PythonAnywhere
+def obtine_libertatea(n=3):
+    url_rss = 'https://www.libertatea.ro/rss'
+    url_api = "https://api.rss2json.com/v1/api.json?rss_url=" + urllib.parse.quote(url_rss, safe="")
     try:
-        req = urllib.request.Request(url_rss, headers={'User-Agent': 'Mozilla/5.0'})
+        req = urllib.request.Request(url_api, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=15) as r:
-            radacina = ET.fromstring(r.read())
-        titluri = [item.findtext('title').strip() for item in radacina.iter('item') if item.findtext('title')][:n]
-        return titluri
+            d = json.loads(r.read())
+        if d.get("status") == "ok":
+            return [item["title"] for item in d.get("items", [])][:n]
     except Exception as e:
-        print(f"Eroare {sursa}: {e}")
+        print(f"Eroare Libertatea: {e}")
     return []
 
-# Main
 date_finale = {}
 date_finale.update(obtine_bnr())
-
-stiri_hotnews = obtine_stiri_direct('https://rss.hotnews.ro/', 'HotNews')
-stiri_libertatea = obtine_stiri_direct('https://www.libertatea.ro/rss', 'Libertatea')
-
-date_finale['stiri'] = stiri_hotnews + stiri_libertatea
+date_finale['stiri'] = obtine_libertatea()
 
 if 'eur' in date_finale:
     with open('curs.json', 'w', encoding='utf-8') as f:
