@@ -28,27 +28,27 @@ def obtine_bnr():
         return {}
 
 def obtine_stiri(n=3):
-    # Listă de surse de știri. Încercăm pe rând până merge una.
+    # Listă de surse de știri cu numele lor. Încercăm pe rând până merge una.
     surse = [
-        'https://www.digi24.ro/rss',
-        'https://rss.hotnews.ro/',
-        'https://www.mediafax.ro/rss'
+        ('https://www.digi24.ro/rss', 'Digi24'),
+        ('https://rss.hotnews.ro/', 'HotNews'),
+        ('https://www.mediafax.ro/rss', 'Mediafax')
     ]
-    # Un User-Agent complet, ca de browser real, ca să nu fim blocați de Cloudflare
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
     
-    for url in surse:
+    for url, sursa in surse:
         try:
-            print(f"Încerc știri de la: {url}")
+            print(f"Încerc știri de la: {sursa}")
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=15) as r:
                 radacina = ET.fromstring(r.read())
-            titluri = [item.findtext('title').strip() for item in radacina.iter('item') if item.findtext('title')][:n]
+            # Adăugăm sursa în fața titlului, ex: "[HotNews] Titlu știre"
+            titluri = [f"[{sursa}] {item.findtext('title').strip()}" for item in radacina.iter('item') if item.findtext('title')][:n]
             if titluri:
-                print(f"Succes știri de la {url}!")
+                print(f"Succes știri de la {sursa}!")
                 return titluri
         except Exception as e:
-            print(f"Eșuat {url}: {e}")
+            print(f"Eșuat {sursa}: {e}")
             
     return []
 
