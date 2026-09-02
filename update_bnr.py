@@ -27,9 +27,9 @@ def obtine_bnr():
         print(f"Eroare BNR: {e}")
         return {}
 
-def obtine_libertatea(n=3):
-    # GitHub citeste direct RSS-ul, fara sa fie blocat!
-    url = 'https://www.libertatea.ro/rss'
+def obtine_stiri(n=3):
+    # Sursa: Digi24 (permite citirea automată fără blocări)
+    url = 'https://www.digi24.ro/rss'
     try:
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=15) as r:
@@ -37,12 +37,12 @@ def obtine_libertatea(n=3):
         titluri = [item.findtext('title').strip() for item in radacina.iter('item') if item.findtext('title')][:n]
         return titluri
     except Exception as e:
-        print(f"Eroare Libertatea: {e}")
+        print(f"Eroare Stiri: {e}")
     return []
 
 date_finale = {}
 date_finale.update(obtine_bnr())
-date_finale['stiri'] = obtine_libertatea()
+date_finale['stiri'] = obtine_stiri()
 
 if 'eur' in date_finale:
     with open('curs.json', 'w', encoding='utf-8') as f:
