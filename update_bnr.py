@@ -6,7 +6,7 @@ import sys
 def obtine_bnr():
     url = 'https://curs.bnr.ro/nbrfxrates.xml'
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'})
         with urllib.request.urlopen(req, timeout=15) as r:
             radacina = ET.fromstring(r.read().decode('utf-8'))
         
@@ -28,18 +28,31 @@ def obtine_bnr():
         return {}
 
 def obtine_stiri(n=3):
-    # Sursa: Digi24 (permite citirea automată fără blocări)
-    url = 'https://www.digi24.ro/rss'
-    try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=15) as r:
-            radacina = ET.fromstring(r.read())
-        titluri = [item.findtext('title').strip() for item in radacina.iter('item') if item.findtext('title')][:n]
-        return titluri
-    except Exception as e:
-        print(f"Eroare Stiri: {e}")
+    # Listă de surse de știri. Încercăm pe rând până merge una.
+    surse = [
+        'https://www.digi24.ro/rss',
+        'https://rss.hotnews.ro/',
+        'https://www.mediafax.ro/rss'
+    ]
+    # Un User-Agent complet, ca de browser real, ca să nu fim blocați de Cloudflare
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+    
+    for url in surse:
+        try:
+            print(f"Încerc știri de la: {url}")
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=15) as r:
+                radacina = ET.fromstring(r.read())
+            titluri = [item.findtext('title').strip() for item in radacina.iter('item') if item.findtext('title')][:n]
+            if titluri:
+                print(f"Succes știri de la {url}!")
+                return titluri
+        except Exception as e:
+            print(f"Eșuat {url}: {e}")
+            
     return []
 
+# Main
 date_finale = {}
 date_finale.update(obtine_bnr())
 date_finale['stiri'] = obtine_stiri()
