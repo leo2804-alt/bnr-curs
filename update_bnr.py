@@ -51,7 +51,6 @@ def obtine_stiri(n=3):
             print(f"Eșuat {sursa}: {e}")
             
     return []
-
 # Main
 date_finale = {}
 date_finale.update(obtine_bnr())
