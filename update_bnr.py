@@ -29,7 +29,6 @@ def obtine_bnr():
         return {}
 
 def aduna_stiri_direct(url, sursa, lista):
-    # Conexiune directă, fără proxy
     try:
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'})
         with urllib.request.urlopen(req, timeout=10) as r:
@@ -44,11 +43,11 @@ def aduna_stiri_direct(url, sursa, lista):
 def obtine_stiri(n=3):
     toate_stirile = []
     
-    # Surse directe, care funcționează pe GitHub fără proxy
+    # Luăm știri din mai multe secțiuni ale Digi24 (care mereu funcționează) + Romania TV (adresa corectă)
     aduna_stiri_direct('https://www.digi24.ro/rss', 'Digi24', toate_stirile)
-    aduna_stiri_direct('https://rss.romaniatv.net/rss.xml', 'RomaniaTV', toate_stirile)
-    aduna_stiri_direct('https://rss.antena3.ro/rss.xml', 'Antena3', toate_stirile)
-    aduna_stiri_direct('https://rss.b1tv.ro/rss', 'B1TV', toate_stirile)
+    aduna_stiri_direct('https://www.digi24.ro/rss/externe', 'Digi24-Externe', toate_stirile)
+    aduna_stiri_direct('https://www.digi24.ro/rss/economie', 'Digi24-Economie', toate_stirile)
+    aduna_stiri_direct('https://www.romaniatv.net/rss.xml', 'RomaniaTV', toate_stirile)
     
     random.shuffle(toate_stirile)
     return toate_stirile[:n]
