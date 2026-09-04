@@ -28,7 +28,7 @@ def obtine_bnr():
         print(f"Eroare BNR: {e}")
         return {}
 
-def obtine_stiri(n=10):
+def obtine_stiri(n=100):
     surse = [
         ('https://www.libertatea.ro/rss', 'Libertatea'),
         ('https://rss.hotnews.ro/', 'HotNews'),
