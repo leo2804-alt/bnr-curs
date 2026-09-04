@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 import json
 import sys
 import random
+import urllib.parse
 
 def obtine_bnr():
     url = 'https://curs.bnr.ro/nbrfxrates.xml'
@@ -28,31 +29,29 @@ def obtine_bnr():
         print(f"Eroare BNR: {e}")
         return {}
 
-def aduna_stiri_direct(url, sursa, lista):
+def aduna_stiri_proxy(url_rss, sursa, lista):
+    # Toate știrile prin proxy ca să ocolim Cloudflare de pe GitHub
+    url_api = "https://api.rss2json.com/v1/api.json?rss_url=" + urllib.parse.quote(url_rss, safe="")
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+        req = urllib.request.Request(url_api, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=10) as r:
-            radacina = ET.fromstring(r.read())
-        for item in radacina.iter('item'):
-            titlu = item.findtext('title')
-            if titlu:
-                lista.append(f"*({sursa})* {titlu.strip()}")
+            d = json.loads(r.read())
+        if d.get("status") == "ok":
+            for item in d.get("items", []):
+                lista.append(f"*({sursa})* {item.get('title', '').strip()}")
     except Exception as e:
-        print(f"Eșuat {sursa}: {e}")
+        print(f"Eșuat proxy {sursa}: {e}")
 
-def obtine_stiri(n=3):
+def obtine_stiri(n=10):
     toate_stirile = []
     
-    # Surse sigure, care nu folosesc Cloudflare anti-bot (nu blochează GitHub)
-    aduna_stiri_direct('https://www.digi24.ro/rss', 'Digi24', toate_stirile)
-    aduna_stiri_direct('https://www.agerpres.ro/rss', 'Agerpres', toate_stirile)
-    aduna_stiri_direct('https://www.g4media.ro/feed', 'G4Media', toate_stirile)
-    aduna_stiri_direct('https://www.economica.net/feed', 'Economica', toate_stirile)
+    # Toate sursele prin proxy!
+    aduna_stiri_proxy('https://www.libertatea.ro/rss', 'Libertatea', toate_stirile)
+    aduna_stiri_proxy('https://rss.hotnews.ro/', 'HotNews', toate_stirile)
+    aduna_stiri_proxy('https://www.digi24.ro/rss', 'Digi24', toate_stirile)
+    aduna_stiri_proxy('https://www.agerpres.ro/rss', 'Agerpres', toate_stirile)
     
-    # Amestecăm toate știrile adunate
     random.shuffle(toate_stirile)
-    
-    # Returnăm doar primele 'n' știri (de ex. 3)
     return toate_stirile[:n]
 
 # Main
