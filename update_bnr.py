@@ -29,27 +29,27 @@ def obtine_bnr():
         print(f"Eroare BNR: {e}")
         return {}
 
-def aduna_stiri_proxy(url_rss, sursa, lista):
-    # Toate știrile prin proxy ca să ocolim Cloudflare de pe GitHub
-    url_api = "https://api.rss2json.com/v1/api.json?rss_url=" + urllib.parse.quote(url_rss, safe="")
+def aduna_stiri(url_rss, sursa, lista):
+    # Folosim codetabs ca să ocolim Cloudflare
+    url_api = "https://api.codetabs.com/v1/proxy?quest=" + url_rss
     try:
         req = urllib.request.Request(url_api, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=10) as r:
-            d = json.loads(r.read())
-        if d.get("status") == "ok":
-            for item in d.get("items", []):
-                lista.append(f"*({sursa})* {item.get('title', '').strip()}")
+            radacina = ET.fromstring(r.read())
+        for item in radacina.iter('item'):
+            titlu = item.findtext('title')
+            if titlu:
+                lista.append(f"*({sursa})* {titlu.strip()}")
     except Exception as e:
-        print(f"Eșuat proxy {sursa}: {e}")
+        print(f"Eșuat {sursa}: {e}")
 
-def obtine_stiri(n=10):
+def obtine_stiri(n=3):
     toate_stirile = []
     
-    # Toate sursele prin proxy!
-    aduna_stiri_proxy('https://www.libertatea.ro/rss', 'Libertatea', toate_stirile)
-    aduna_stiri_proxy('https://rss.hotnews.ro/', 'HotNews', toate_stirile)
-    aduna_stiri_proxy('https://www.digi24.ro/rss', 'Digi24', toate_stirile)
-    aduna_stiri_proxy('https://www.agerpres.ro/rss', 'Agerpres', toate_stirile)
+    # Toate sursele prin codetabs
+    aduna_stiri('https://www.libertatea.ro/rss', 'Libertatea', toate_stirile)
+    aduna_stiri('https://rss.hotnews.ro/', 'HotNews', toate_stirile)
+    aduna_stiri('https://www.digi24.ro/rss', 'Digi24', toate_stirile)
     
     random.shuffle(toate_stirile)
     return toate_stirile[:n]
