@@ -3,7 +3,6 @@ import xml.etree.ElementTree as ET
 import json
 import sys
 import random
-import urllib.parse
 
 def obtine_bnr():
     url = 'https://curs.bnr.ro/nbrfxrates.xml'
@@ -29,11 +28,10 @@ def obtine_bnr():
         print(f"Eroare BNR: {e}")
         return {}
 
-def aduna_stiri(url_rss, sursa, lista):
-    # Folosim codetabs ca să ocolim Cloudflare
-    url_api = "https://api.codetabs.com/v1/proxy?quest=" + url_rss
+def aduna_stiri_direct(url, sursa, lista):
+    # Conexiune directă, fără proxy
     try:
-        req = urllib.request.Request(url_api, headers={'User-Agent': 'Mozilla/5.0'})
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'})
         with urllib.request.urlopen(req, timeout=10) as r:
             radacina = ET.fromstring(r.read())
         for item in radacina.iter('item'):
@@ -46,10 +44,11 @@ def aduna_stiri(url_rss, sursa, lista):
 def obtine_stiri(n=3):
     toate_stirile = []
     
-    # Toate sursele prin codetabs
-    aduna_stiri('https://www.libertatea.ro/rss', 'Libertatea', toate_stirile)
-    aduna_stiri('https://rss.hotnews.ro/', 'HotNews', toate_stirile)
-    aduna_stiri('https://www.digi24.ro/rss', 'Digi24', toate_stirile)
+    # Surse directe, care funcționează pe GitHub fără proxy
+    aduna_stiri_direct('https://www.digi24.ro/rss', 'Digi24', toate_stirile)
+    aduna_stiri_direct('https://rss.romaniatv.net/rss.xml', 'RomaniaTV', toate_stirile)
+    aduna_stiri_direct('https://rss.antena3.ro/rss.xml', 'Antena3', toate_stirile)
+    aduna_stiri_direct('https://rss.b1tv.ro/rss', 'B1TV', toate_stirile)
     
     random.shuffle(toate_stirile)
     return toate_stirile[:n]
