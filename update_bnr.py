@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 import json
 import sys
 import random
+import urllib.parse
 
 def obtine_bnr():
     url = 'https://curs.bnr.ro/nbrfxrates.xml'
@@ -28,36 +29,48 @@ def obtine_bnr():
         print(f"Eroare BNR: {e}")
         return {}
 
-def obtine_stiri(n=100):
-    surse = [
-        ('https://www.libertatea.ro/rss', 'Libertatea'),
-        ('https://rss.hotnews.ro/', 'HotNews'),
-        ('https://www.digi24.ro/rss', 'Digi24'),
-        ('https://www.agerpres.ro/rss', 'Agerpres')
-    ]
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
-    
+def aduna_stiri_direct(url, sursa, lista):
+    # Pentru Digi24 și Agerpres (nu blochează GitHub)
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            radacina = ET.fromstring(r.read())
+        for item in radacina.iter('item'):
+            titlu = item.findtext('title')
+            if titlu:
+                lista.append(f"*({sursa})* {titlu.strip()}")
+    except Exception as e:
+        print(f"Eșuat direct {sursa}: {e}")
+
+def aduna_stiri_proxy(url_rss, sursa, lista):
+    # Pentru Libertatea și HotNews (folosim proxy ca să ocolim Cloudflare)
+    url_api = "https://api.rss2json.com/v1/api.json?rss_url=" + urllib.parse.quote(url_rss, safe="")
+    try:
+        req = urllib.request.Request(url_api, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            d = json.loads(r.read())
+        if d.get("status") == "ok":
+            for item in d.get("items", []):
+                lista.append(f"*({sursa})* {item.get('title', '').strip()}")
+    except Exception as e:
+        print(f"Eșuat proxy {sursa}: {e}")
+
+def obtine_stiri(n=3):
     toate_stirile = []
     
-    # Luăm știri de la TOATE sursele care funcționează
-    for url, sursa in surse:
-        try:
-            print(f"Adun știri de la: {sursa}")
-            req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=10) as r:
-                radacina = ET.fromstring(r.read())
-            for item in radacina.iter('item'):
-                titlu = item.findtext('title')
-                if titlu:
-                    # Adăugăm sursa în fața titlului
-                    toate_stirile.append(f"*({sursa})* {titlu.strip()}")
-        except Exception as e:
-            print(f"Eșuat {sursa}: {e}")
-            
-    # Amestecăm TOATE știrile adunate (de la Digi24, Agerpres, etc.)
+    # 1. Libertatea (prin proxy)
+    aduna_stiri_proxy('https://www.libertatea.ro/rss', 'Libertatea', toate_stirile)
+    # 2. HotNews (prin proxy)
+    aduna_stiri_proxy('https://rss.hotnews.ro/', 'HotNews', toate_stirile)
+    # 3. Digi24 (direct)
+    aduna_stiri_direct('https://www.digi24.ro/rss', 'Digi24', toate_stirile)
+    # 4. Agerpres (direct)
+    aduna_stiri_direct('https://www.agerpres.ro/rss', 'Agerpres', toate_stirile)
+    
+    # Amestecăm toate știrile adunate
     random.shuffle(toate_stirile)
     
-    # Returnăm doar primele 'n' știri (de ex. 3) din cele amestecate
+    # Returnăm doar primele 'n' știri
     return toate_stirile[:n]
 
 # Main
