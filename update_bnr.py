@@ -2,6 +2,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 import json
 import sys
+import random
 
 def obtine_bnr():
     url = 'https://curs.bnr.ro/nbrfxrates.xml'
@@ -27,13 +28,15 @@ def obtine_bnr():
         print(f"Eroare BNR: {e}")
         return {}
 
-def obtine_stiri(n=3):
-    # Listă de surse de știri cu numele lor. Încercăm pe rând până merge una.
+def obtine_stiri(n=10):
+    # Surse cu numele complete
     surse = [
-        ('https://www.digi24.ro/rss', 'Digi24'),
+        ('https://www.libertatea.ro/rss', 'Libertatea'),
         ('https://rss.hotnews.ro/', 'HotNews'),
-        ('https://www.mediafax.ro/rss', 'Mediafax')
+        ('https://www.digi24.ro/rss', 'Digi24')
     ]
+    random.shuffle(surse) # Amestecăm lista ca să vină aleatoriu!
+    
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
     
     for url, sursa in surse:
@@ -42,8 +45,8 @@ def obtine_stiri(n=3):
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=15) as r:
                 radacina = ET.fromstring(r.read())
-            # Adăugăm sursa în fața titlului, ex: "[HotNews] Titlu știre"
-            titluri = [f"[{sursa}] {item.findtext('title').strip()}" for item in radacina.iter('item') if item.findtext('title')][:n]
+            # Punem sursa completă între paranteze și bold
+            titluri = [f"*({sursa})* {item.findtext('title').strip()}" for item in radacina.iter('item') if item.findtext('title')][:n]
             if titluri:
                 print(f"Succes știri de la {sursa}!")
                 return titluri
@@ -51,6 +54,7 @@ def obtine_stiri(n=3):
             print(f"Eșuat {sursa}: {e}")
             
     return []
+
 # Main
 date_finale = {}
 date_finale.update(obtine_bnr())
