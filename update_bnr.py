@@ -29,31 +29,36 @@ def obtine_bnr():
         return {}
 
 def obtine_stiri(n=10):
-    # Surse cu numele complete
     surse = [
         ('https://www.libertatea.ro/rss', 'Libertatea'),
         ('https://rss.hotnews.ro/', 'HotNews'),
-        ('https://www.digi24.ro/rss', 'Digi24')
+        ('https://www.digi24.ro/rss', 'Digi24'),
+        ('https://www.agerpres.ro/rss', 'Agerpres')
     ]
-    random.shuffle(surse) # Amestecăm lista ca să vină aleatoriu!
-    
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
     
+    toate_stirile = []
+    
+    # Luăm știri de la TOATE sursele care funcționează
     for url, sursa in surse:
         try:
-            print(f"Încerc știri de la: {sursa}")
+            print(f"Adun știri de la: {sursa}")
             req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=15) as r:
+            with urllib.request.urlopen(req, timeout=10) as r:
                 radacina = ET.fromstring(r.read())
-            # Punem sursa completă între paranteze și bold
-            titluri = [f"*({sursa})* {item.findtext('title').strip()}" for item in radacina.iter('item') if item.findtext('title')][:n]
-            if titluri:
-                print(f"Succes știri de la {sursa}!")
-                return titluri
+            for item in radacina.iter('item'):
+                titlu = item.findtext('title')
+                if titlu:
+                    # Adăugăm sursa în fața titlului
+                    toate_stirile.append(f"*({sursa})* {titlu.strip()}")
         except Exception as e:
             print(f"Eșuat {sursa}: {e}")
             
-    return []
+    # Amestecăm TOATE știrile adunate (de la Digi24, Agerpres, etc.)
+    random.shuffle(toate_stirile)
+    
+    # Returnăm doar primele 'n' știri (de ex. 3) din cele amestecate
+    return toate_stirile[:n]
 
 # Main
 date_finale = {}
