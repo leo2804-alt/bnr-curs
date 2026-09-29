@@ -2,7 +2,8 @@ name: Update BNR
 on:
   workflow_dispatch:
   schedule:
-    - cron: '35 10 * * *'
+    - cron: '35 10 * * *'   # 13:35 ora Romaniei, vara (UTC+3)
+    - cron: '35 11 * * *'   # 13:35 ora Romaniei, iarna (UTC+2)
     
 jobs:
   update:
