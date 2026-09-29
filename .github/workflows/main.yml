@@ -1,9 +1,9 @@
 name: Update BNR
 on:
-  schedule:
-    - cron: '0 21 * * *'
   workflow_dispatch:
-
+  schedule:
+    - cron: '35 10 * * *'
+    
 jobs:
   update:
     runs-on: ubuntu-latest
