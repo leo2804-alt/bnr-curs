@@ -2,9 +2,13 @@ name: Update BNR
 on:
   workflow_dispatch:
   schedule:
-    - cron: '35 10 * * *'   # 13:35 ora Romaniei, vara (UTC+3)
-    - cron: '35 11 * * *'   # 13:35 ora Romaniei, iarna (UTC+2)
-    
+    - cron: '35 10 * * *'   # 13:35 vara
+    - cron: '35 11 * * *'   # 13:35 iarna
+    - cron: '5 13 * * *'    # 16:05 vara (rezerva, in caz ca prima sare)
+    - cron: '5 14 * * *'    # 16:05 iarna (rezerva)
+    - cron: '35 18 * * *'   # 21:35 vara — prinde si titlurile de seara
+    - cron: '35 19 * * *'   # 21:35 iarna
+
 jobs:
   update:
     runs-on: ubuntu-latest
